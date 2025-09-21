@@ -9,11 +9,12 @@ log_interval = 10 # don't print too too often
 # we expect to overfit on this small dataset, so only save when val improves
 always_save_checkpoint = False
 
-wandb_log = False # override via command line if you like
-wandb_project = 'shakespeare-char'
-wandb_run_name = 'mini-gpt'
+mlflow_log = True # override via command line if you like
+mlflow_experiment_name = 'shakespeare-char'
+mlflow_run_name = 'mini-gpt'
 
 dataset = 'shakespeare_char'
+data_dir = 'training-data/shakespeare_char'  # Use training-data folder
 gradient_accumulation_steps = 1
 batch_size = 64
 block_size = 256 # context of up to 256 previous characters

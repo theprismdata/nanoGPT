@@ -20,8 +20,8 @@ tiktoken>=0.3.0
 tqdm>=4.64.0
 requests>=2.28.0
 
-# Optional: Experiment tracking (wandb removed - not needed)
-# wandb>=0.13.0
+# Experiment tracking with MLflow
+mlflow>=2.8.0
 
 # Optional: Jupyter notebook dependencies
 matplotlib>=3.5.0

@@ -9,13 +9,14 @@ log_interval = 10
 # Save checkpoints when validation improves
 always_save_checkpoint = False
 
-# Weights & Biases logging (optional)
-wandb_log = False
-wandb_project = 'instruction-tuning'
-wandb_run_name = 'nanogpt-instruct'
+# MLflow logging
+mlflow_log = True
+mlflow_experiment_name = 'instruction-tuning'
+mlflow_run_name = 'nanogpt-instruct'
 
 # Dataset configuration
 dataset = 'instruction'
+data_dir = 'training-data/instruction'  # Use training-data folder
 gradient_accumulation_steps = 4  # simulate larger batch size
 batch_size = 16  # smaller batch size for instruction data
 block_size = 512  # longer context for instruction-response pairs

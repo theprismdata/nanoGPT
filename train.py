@@ -39,10 +39,10 @@ eval_iters = 200
 eval_only = False # if True, script exits right after the first eval
 always_save_checkpoint = True # if True, always save a checkpoint after each eval
 init_from = 'scratch' # 'scratch' or 'resume' or 'gpt2*'
-# wandb logging
-wandb_log = False # disabled by default
-wandb_project = 'owt'
-wandb_run_name = 'gpt2' # 'run' + str(time.time())
+# mlflow logging
+mlflow_log = True # enabled by default
+mlflow_experiment_name = 'nanoGPT'
+mlflow_run_name = None # will be auto-generated if None
 # data
 dataset = 'openwebtext'
 gradient_accumulation_steps = 5 * 8 # used to simulate larger batch sizes
@@ -112,7 +112,9 @@ ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torc
 ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
 # poor man's data loader
-data_dir = os.path.join('data', dataset)
+# Use data_dir from config if specified, otherwise default to data/dataset
+if 'data_dir' not in locals():
+    data_dir = os.path.join('data', dataset)
 def get_batch(split):
     # We recreate np.memmap every batch to avoid a memory leak, as per
     # https://stackoverflow.com/questions/45132940/numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
@@ -242,9 +244,23 @@ def get_lr(it):
     return min_lr + coeff * (learning_rate - min_lr)
 
 # logging
-if wandb_log and master_process:
-    import wandb
-    wandb.init(project=wandb_project, name=wandb_run_name, config=config)
+if mlflow_log and master_process:
+    import mlflow
+    import mlflow.pytorch
+    
+    # Set experiment name
+    mlflow.set_experiment(mlflow_experiment_name)
+    
+    # Start run
+    run_name = mlflow_run_name if mlflow_run_name else f"run_{int(time.time())}"
+    mlflow.start_run(run_name=run_name)
+    
+    # Log parameters
+    mlflow.log_params(config)
+    
+    # Log model architecture info
+    mlflow.log_param("model_type", "GPT")
+    mlflow.log_param("vocab_size", model_args.get('vocab_size', 'unknown'))
 
 # training loop
 X, Y = get_batch('train') # fetch the very first batch
@@ -263,14 +279,14 @@ while True:
     if iter_num % eval_interval == 0 and master_process:
         losses = estimate_loss()
         print(f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
-        if wandb_log:
-            wandb.log({
-                "iter": iter_num,
-                "train/loss": losses['train'],
-                "val/loss": losses['val'],
-                "lr": lr,
+        if mlflow_log:
+            mlflow.log_metrics({
+                "train_loss": losses['train'],
+                "val_loss": losses['val'],
+                "learning_rate": lr,
                 "mfu": running_mfu*100, # convert to percentage
-            })
+                "iter_num": iter_num
+            }, step=iter_num)
         if losses['val'] < best_val_loss or always_save_checkpoint:
             best_val_loss = losses['val']
             if iter_num > 0:
@@ -283,7 +299,18 @@ while True:
                     'config': config,
                 }
                 print(f"saving checkpoint to {out_dir}")
-                torch.save(checkpoint, os.path.join(out_dir, 'ckpt.pt'))
+                checkpoint_path = os.path.join(out_dir, 'ckpt.pt')
+                torch.save(checkpoint, checkpoint_path)
+                
+                # Log model to MLflow
+                if mlflow_log:
+                    mlflow.pytorch.log_model(
+                        pytorch_model=raw_model,
+                        artifact_path="model",
+                        registered_model_name=f"nanoGPT_{mlflow_experiment_name}"
+                    )
+                    # Log checkpoint as artifact
+                    mlflow.log_artifact(checkpoint_path, "checkpoints")
     if iter_num == 0 and eval_only:
         break
 
@@ -334,3 +361,7 @@ while True:
 
 if ddp:
     destroy_process_group()
+
+# End MLflow run
+if mlflow_log and master_process:
+    mlflow.end_run()

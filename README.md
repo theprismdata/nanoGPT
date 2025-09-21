@@ -12,7 +12,7 @@ Because the code is so simple, it is very easy to hack to your needs, train new 
 ## install
 
 ```
-pip install torch numpy transformers datasets tiktoken wandb tqdm
+pip install -r requirements.txt
 ```
 
 Dependencies:
@@ -22,7 +22,7 @@ Dependencies:
 -  `transformers` for huggingface transformers <3 (to load GPT-2 checkpoints)
 -  `datasets` for huggingface datasets <3 (if you want to download + preprocess OpenWebText)
 -  `tiktoken` for OpenAI's fast BPE code <3
--  `wandb` for optional logging <3
+-  `mlflow` for experiment tracking and model management <3
 -  `tqdm` for progress bars <3
 
 ## quick start
@@ -221,6 +221,62 @@ For some context on this repository, GPT, and language modeling it might be help
 For more questions/discussions feel free to stop by **#nanoGPT** on Discord:
 
 [![](https://dcbadge.vercel.app/api/server/3zy8kqD9Cp?compact=true&style=flat)](https://discord.gg/3zy8kqD9Cp)
+
+## MLflow Integration
+
+This repository includes MLflow integration for experiment tracking and model management. MLflow provides comprehensive logging, model versioning, and deployment capabilities.
+
+### Starting MLflow Server
+
+Before training, start the MLflow tracking server:
+
+```sh
+python start_mlflow_server.py
+```
+
+This will start the server on `http://localhost:5000`. You can view experiments, compare runs, and manage models through the web UI.
+
+### Training with MLflow
+
+Training automatically logs to MLflow when `mlflow_log = True` in your config:
+
+```sh
+python train.py config/train_shakespeare_char.py
+```
+
+### MLflow Features
+
+- **Experiment Tracking**: Automatic logging of hyperparameters, metrics, and artifacts
+- **Model Registry**: Version and manage trained models
+- **Model Deployment**: Serve models via REST API
+- **Run Comparison**: Compare different training runs and hyperparameters
+
+### MLflow Utilities
+
+Use the provided utilities for advanced MLflow operations:
+
+```python
+from mlflow_utils import (
+    setup_mlflow_experiment,
+    log_training_config,
+    get_best_model_from_experiment,
+    load_model_from_run
+)
+
+# Get the best model from an experiment
+best_run_id = get_best_model_from_experiment("shakespeare-char", "val_loss")
+model = load_model_from_run(best_run_id)
+```
+
+### Testing MLflow Integration
+
+Test the MLflow setup:
+
+```sh
+python test_mlflow_integration.py
+```
+
+This will verify that MLflow is properly configured and can log experiments and models.
 
 ## acknowledgements
 

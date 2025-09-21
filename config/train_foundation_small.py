@@ -13,13 +13,14 @@ log_interval = 100
 # Checkpoint settings
 always_save_checkpoint = True
 
-# Logging (optional)
-wandb_log = False  # Set to True if you want to track experiments
-wandb_project = 'foundation-model'
-wandb_run_name = 'foundation-small-v1'
+# MLflow logging
+mlflow_log = True  # Set to False if you don't want to track experiments
+mlflow_experiment_name = 'foundation-model'
+mlflow_run_name = 'foundation-small-v1'
 
 # Data configuration
 dataset = 'foundation'  # Prepare your foundation dataset
+data_dir = 'training-data/foundation'  # Use training-data folder instead of data/
 gradient_accumulation_steps = 8  # Simulate larger batch sizes
 batch_size = 12
 block_size = 1024

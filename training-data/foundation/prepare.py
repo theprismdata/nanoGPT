@@ -17,8 +17,8 @@ def prepare_foundation_data():
     print("🔄 Preparing foundation dataset...")
     
     # Create data directory
-    data_dir = Path("data/foundation")
-    data_dir.mkdir(exist_ok=True)
+    data_dir = Path("training-data/foundation")
+    data_dir.mkdir(parents=True, exist_ok=True)
     
     # Initialize tokenizer
     enc = tiktoken.get_encoding("gpt2")

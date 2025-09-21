@@ -50,8 +50,7 @@ def run_sample(instruction, input_text="", temperature=0.7, max_tokens=200, num_
             # Parse the output to extract just the response
             output = result.stdout
             lines = output.split('\n')
-            
-            # Find the line that contains our prompt and extract the response
+                        # Find the line that contains our prompt and extract the response
             response = None
             for line in lines:
                 if prompt in line:
